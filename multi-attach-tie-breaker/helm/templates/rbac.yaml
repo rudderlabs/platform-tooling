@@ -1,0 +1,36 @@
+# should create a role to be able to watch all events and to delete any volume attachements accross the entire cluster
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: multi-attach-tie-breaker
+rules:
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["watch"]
+# let's add an api group to permit listing and deleting of volumeattachements
+- apiGroups: ["storage.k8s.io"]
+  resources: ["volumeattachments"]
+  verbs: ["list", "delete"]
+
+---
+# let's create the respected service account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: multi-attach-tie-breaker
+  namespace: {{ .Release.Namespace }}
+
+---
+# let's create the respected role binding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: multi-attach-tie-breaker
+roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: multi-attach-tie-breaker
+subjects:
+- kind: ServiceAccount
+  name: multi-attach-tie-breaker
+  namespace: {{ .Release.Namespace }}

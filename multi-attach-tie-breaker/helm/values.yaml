@@ -1,0 +1,21 @@
+labels:
+  focus: cluster-management
+  team: infra
+  customer: shared
+  customer-tier: shared
+  service: multi-attach-tie-breaker
+image: 
+  repository: rudderstack/multi-attach-tie-breaker
+  tag: v0.0.1
+  pullPolicy: IfNotPresent
+  pullSecrets:
+    - name: regcred
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+matching_workloads:
+  # this should be a list of all the regexes to match the workloads

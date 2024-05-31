@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-statefulset
+  labels:
+    app: multi-attach-tie-breaker
+    release: {{ .Release.Name }}
+    {{- if .Values.labels }}
+    {{- toYaml .Values.labels | nindent 4 }}
+    {{- end }}
+spec:
+  serviceName: "{{ .Release.Name }}-headless"
+  replicas: 1 # Should never exceed 1
+  selector:
+    matchLabels:
+      app: multi-attach-tie-breaker
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: multi-attach-tie-breaker
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: multi-attach-tie-breaker
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.image.pullSecrets }}
+      {{- range $key, $value := . }}
+        - name: {{ $key }}
+          key: {{ $value | quote }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      containers:
+      - name: multi-attach-tie-breaker
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        env:
+          {{- $list := .Values.matching_workloads }}
+          {{- $separator := ", " }}
+          {{- $stringValue := join $separator $list }}
+          - name: MATCHING_WORKLOADS
+            value: {{ $stringValue | quote }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        resources:
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
